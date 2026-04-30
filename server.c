@@ -5,51 +5,56 @@
 #include <sys/socket.h> // POSIX socket library
 #include <netinet/in.h> // Internet address structures
 
+// --- NEW CODE: Defining our Data Model in Memory ---
+typedef struct {
+    int id;
+    char username[32];
+    int account_balance;
+} User;
 int main() {
-    // 1. Ask the OS for a network socket (like asking for a telephone)
     int server_fd = socket(AF_INET, SOCK_STREAM, 0);
     
-    // 2. Configure the address and port (Port 8080)
     struct sockaddr_in address;
     address.sin_family = AF_INET;
     address.sin_addr.s_addr = INADDR_ANY;
     address.sin_port = htons(8080);
     
-    // 3. Bind the socket to the port (plug the phone into the wall)
     bind(server_fd, (struct sockaddr *)&address, sizeof(address));
-    
-    // 4. Listen for incoming connections
     listen(server_fd, 3);
     printf("Server listening on port 8080...\n");
-    // The Event Loop
-   // The Event Loop
+    
     while(1) {
         int client_socket = accept(server_fd, NULL, NULL);
         char buffer[1024] = {0}; 
         recv(client_socket, buffer, sizeof(buffer) - 1, 0);
         
-        // --- NEW CODE: The Router ---
-        // We create small buckets to hold the extracted words
         char method[16], path[256], protocol[16];
-        
-        // sscanf looks at the buffer, grabs the first 3 words separated by spaces, 
-        // and drops them into our buckets.
         sscanf(buffer, "%s %s %s", method, path, protocol);
         
-        printf("\n[ROUTER] Action: %s | Route: %s\n", method, path);
+        // We declare a pointer for our final message
+        char response[1024]; 
         
-        // Basic routing logic
-        char *message;
-        if (strcmp(path, "/ledger") == 0) {
-            message = "HTTP/1.1 200 OK\n\nWelcome to the Financial Ledger!\n";
-        } else if (strcmp(path, "/users") == 0) {
-            message = "HTTP/1.1 200 OK\n\nReturning User Database...\n";
+        if (strcmp(path, "/users") == 0) {
+            // 1. Instantiate a User in memory
+            User admin;
+            admin.id = 1;
+            strcpy(admin.username, "cto_founder");
+            admin.account_balance = 500000;
+
+            // 2. Format a proper HTTP response with the Content-Type set to JSON
+            // We use sprintf to inject our C variables into the JSON string
+            sprintf(response, 
+                "HTTP/1.1 200 OK\n"
+                "Content-Type: application/json\n\n"
+                "{\n  \"id\": %d,\n  \"username\": \"%s\",\n  \"balance\": %d\n}\n", 
+                admin.id, admin.username, admin.account_balance);
         } else {
-            message = "HTTP/1.1 404 NOT FOUND\n\n404: Route does not exist.\n";
+            strcpy(response, "HTTP/1.1 404 NOT FOUND\n\n404: Route does not exist.\n");
         }
 
-        send(client_socket, message, strlen(message), 0);
+        send(client_socket, response, strlen(response), 0);
         close(client_socket); 
     }
     return 0;
 }
+
