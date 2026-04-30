@@ -22,24 +22,33 @@ int main() {
     listen(server_fd, 3);
     printf("Server listening on port 8080...\n");
     // The Event Loop
+   // The Event Loop
     while(1) {
         int client_socket = accept(server_fd, NULL, NULL);
-        
-        // 1. Create a blank notepad (buffer) of 1024 bytes in memory
         char buffer[1024] = {0}; 
-        
-        // 2. Read the browser's incoming message into the notepad
         recv(client_socket, buffer, sizeof(buffer) - 1, 0);
         
-        // 3. Print the notepad to our terminal
-        printf("\n--- NEW REQUEST RECIEVED ---\n");
-        printf("%s", buffer);
-        printf("----------------------------\n");
+        // --- NEW CODE: The Router ---
+        // We create small buckets to hold the extracted words
+        char method[16], path[256], protocol[16];
         
-        // 4. Send our standard reply
-        char *message = "HTTP/1.1 200 OK\n\nHello from the infinite loop!\n";
+        // sscanf looks at the buffer, grabs the first 3 words separated by spaces, 
+        // and drops them into our buckets.
+        sscanf(buffer, "%s %s %s", method, path, protocol);
+        
+        printf("\n[ROUTER] Action: %s | Route: %s\n", method, path);
+        
+        // Basic routing logic
+        char *message;
+        if (strcmp(path, "/ledger") == 0) {
+            message = "HTTP/1.1 200 OK\n\nWelcome to the Financial Ledger!\n";
+        } else if (strcmp(path, "/users") == 0) {
+            message = "HTTP/1.1 200 OK\n\nReturning User Database...\n";
+        } else {
+            message = "HTTP/1.1 404 NOT FOUND\n\n404: Route does not exist.\n";
+        }
+
         send(client_socket, message, strlen(message), 0);
-        
         close(client_socket); 
     }
     return 0;
