@@ -24,6 +24,16 @@ int main() {
     while(1){
     // 5. Accept a connection and say hello
     int client_socket = accept(server_fd, NULL, NULL);
+     // 1. Create a blank notepad (buffer) of 1024 bytes in memory
+        char buffer[1024] = {0};
+        // 2. Read the browser's incoming message into the notepad
+        recv(client_socket, buffer, sizeof(buffer) - 1, 0);
+
+        // 3. Print the notepad to our terminal
+        printf("\n--- NEW REQUEST RECIEVED ---\n");
+        printf("%s", buffer);
+        printf("----------------------------\n");
+
     char *message = "HTTP/1.1 200 OK\n\nHello from raw C!\n";
     send(client_socket, message, strlen(message), 0);
     
