@@ -32,22 +32,36 @@ int main() {
         sscanf(buffer, "%s %s %s", method, path, protocol);
         
         // We declare a pointer for our final message
+        // Basic routing logic
         char response[1024]; 
         
-        if (strcmp(path, "/users") == 0) {
-            // 1. Instantiate a User in memory
+        if (strcmp(method, "GET") == 0 && strcmp(path, "/users") == 0) {
             User admin;
             admin.id = 1;
             strcpy(admin.username, "cto_founder");
             admin.account_balance = 500000;
 
-            // 2. Format a proper HTTP response with the Content-Type set to JSON
-            // We use sprintf to inject our C variables into the JSON string
             sprintf(response, 
                 "HTTP/1.1 200 OK\n"
                 "Content-Type: application/json\n\n"
                 "{\n  \"id\": %d,\n  \"username\": \"%s\",\n  \"balance\": %d\n}\n", 
                 admin.id, admin.username, admin.account_balance);
+                
+        } else if (strcmp(method, "POST") == 0 && strcmp(path, "/users") == 0) {
+            // --- NEW CODE: Extracting the Body ---
+            // 1. Search the buffer for the exact dividing line
+            char *body = strstr(buffer, "\r\n\r\n");
+            
+            if (body != NULL) {
+                // 2. Move the pointer forward 4 spaces to skip the "\r\n\r\n" itself
+                body += 4; 
+                printf("\n[ROUTER] Received Payload: %s\n", body);
+                
+                // 3. Send a 201 Created response
+                strcpy(response, "HTTP/1.1 201 Created\nContent-Type: application/json\n\n{\"status\": \"success\", \"message\": \"User received by C server!\"}\n");
+            } else {
+                strcpy(response, "HTTP/1.1 400 Bad Request\n\nMissing Body.\n");
+            }
         } else {
             strcpy(response, "HTTP/1.1 404 NOT FOUND\n\n404: Route does not exist.\n");
         }
