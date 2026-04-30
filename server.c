@@ -21,7 +21,7 @@ int main() {
     // 4. Listen for incoming connections
     listen(server_fd, 3);
     printf("Server listening on port 8080...\n");
-    
+    while(1){
     // 5. Accept a connection and say hello
     int client_socket = accept(server_fd, NULL, NULL);
     char *message = "HTTP/1.1 200 OK\n\nHello from raw C!\n";
@@ -30,5 +30,6 @@ int main() {
     printf("Message sent, closing server.\n");
     close(client_socket);
     close(server_fd);
+    }
     return 0;
 }
