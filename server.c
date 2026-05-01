@@ -52,13 +52,33 @@ int main() {
             // 1. Search the buffer for the exact dividing line
             char *body = strstr(buffer, "\r\n\r\n");
             
-            if (body != NULL) {
-                // 2. Move the pointer forward 4 spaces to skip the "\r\n\r\n" itself
-                body += 4; 
+        if (body != NULL) {
+                body += 4; // Skip the \r\n\r\n
                 printf("\n[ROUTER] Received Payload: %s\n", body);
                 
-                // 3. Send a 201 Created response
-                strcpy(response, "HTTP/1.1 201 Created\nContent-Type: application/json\n\n{\"status\": \"success\", \"message\": \"User received by C server!\"}\n");
+                // --- NEW CODE: The Naive JSON Parser ---
+                char parsed_username[32] = {0};
+                int parsed_deposit = 0;
+                
+                // We use a regex-like format string in C. 
+                // \"%[^\"]\" tells C: Match a quote, then read everything 
+                // until you hit the NEXT quote, and save it to our variable.
+                int matched_items = sscanf(body, 
+                    "{\"username\": \"%[^\"]\", \"deposit\": %d}", 
+                    parsed_username, &parsed_deposit);
+                
+                if (matched_items == 2) {
+                    printf("[PARSER SUCCESS] Username: %s | Deposit: %d\n", parsed_username, parsed_deposit);
+                    
+                    // Now that we have real C variables, we can format a dynamic response!
+                    sprintf(response, 
+                        "HTTP/1.1 201 Created\nContent-Type: application/json\n\n"
+                        "{\"status\": \"account_created\", \"welcome\": \"%s\", \"initial_balance\": %d}\n", 
+                        parsed_username, parsed_deposit);
+                } else {
+                    printf("[PARSER ERROR] Malformed JSON detected.\n");
+                    strcpy(response, "HTTP/1.1 400 Bad Request\n\nInvalid JSON format.\n");
+                }
             } else {
                 strcpy(response, "HTTP/1.1 400 Bad Request\n\nMissing Body.\n");
             }
