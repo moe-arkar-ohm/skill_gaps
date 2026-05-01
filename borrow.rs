@@ -7,6 +7,6 @@ fn main() {
     
     // 3. The borrower uses the key to change the original memory
    active_process.push_str(" - v2.0 (Stable Environment)");
-    println!("Original memory: {}", server_name); // The Guest Key
+
     println!("System Status: {}", active_process); // The Renovation Key
 }
